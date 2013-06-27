@@ -1,228 +1,227 @@
-/*     */ package net.minecraft;
-/*     */ 
-/*     */ import java.io.BufferedReader;
-/*     */ import java.io.DataInputStream;
-/*     */ import java.io.DataOutputStream;
-/*     */ import java.io.File;
-/*     */ import java.io.FileInputStream;
-/*     */ import java.io.FileNotFoundException;
-/*     */ import java.io.FileOutputStream;
-/*     */ import java.io.IOException;
-/*     */ import java.io.InputStream;
-/*     */ import java.io.InputStreamReader;
-/*     */ import java.net.HttpURLConnection;
-/*     */ import java.net.URL;
-/*     */ import java.util.Properties;
-/*     */ import java.util.logging.Level;
-/*     */ import java.util.logging.Logger;
-/*     */ 
-/*     */ public class MinecraftUtil
-/*     */ {
-/*  20 */   private static File workDir = null;
-/*  21 */   private static File binDir = null;
-/*  22 */   private static File resourcesDis = null;
-/*  23 */   private static File optionsFile = null;
-/*  24 */   private static File lastloginFile = null;
-/*  25 */   private static File savesDir = null;
-/*  26 */   private static File tempFolder = null;
-/*  27 */   private static File nativesFolder = null;
-/*     */ 
-/*     */   public static File getWorkingDirectory() {
-/*  30 */     if (workDir == null) {
-/*  31 */       workDir = getWorkingDirectory("minecraft");
-/*     */     }
-/*  33 */     return workDir;
-/*     */   }
-/*     */ 
-/*     */   public static File getBinFolder() {
-/*  37 */     if (binDir == null) {
-/*  38 */       binDir = new File(getWorkingDirectory(), "bin");
-/*     */     }
-/*  40 */     return binDir;
-/*     */   }
-/*     */ 
-/*     */   public static File getResourcesFolder() {
-/*  44 */     if (resourcesDis == null) {
-/*  45 */       resourcesDis = new File(getWorkingDirectory(), "resources");
-/*     */     }
-/*  47 */     return resourcesDis;
-/*     */   }
-/*     */ 
-/*     */   public static File getOptionsFile() {
-/*  51 */     if (optionsFile == null) {
-/*  52 */       optionsFile = new File(getWorkingDirectory(), "options.txt");
-/*     */     }
-/*  54 */     return optionsFile;
-/*     */   }
-/*     */ 
-/*     */   public static File getLoginFile() {
-/*  58 */     if (lastloginFile == null) {
-/*  59 */       lastloginFile = new File(getWorkingDirectory(), "lastlogin");
-/*     */     }
-/*  61 */     return lastloginFile;
-/*     */   }
-/*     */ 
-/*     */   public static File getSavesFolder() {
-/*  65 */     if (savesDir == null) {
-/*  66 */       savesDir = new File(getWorkingDirectory(), "saves");
-/*     */     }
-/*  68 */     return savesDir;
-/*     */   }
-/*     */ 
-/*     */   public static File getNativesFolder() {
-/*  72 */     if (nativesFolder == null) {
-/*  73 */       nativesFolder = new File(getBinFolder(), "natives");
-/*     */     }
-/*  75 */     return nativesFolder;
-/*     */   }
-/*     */ 
-/*     */   public static File getTempFolder() {
-/*  79 */     if (tempFolder == null) {
-/*  80 */       tempFolder = new File(System.getProperties().getProperty("java.io.tmpdir"), "MCBKPMNGR");
-/*     */     }
-/*  82 */     if (!tempFolder.exists()) {
-/*  83 */       tempFolder.mkdirs();
-/*     */     }
-/*  85 */     return tempFolder;
-/*     */   }
-/*     */ 
-/*     */   public static File getWorkingDirectory(String applicationName) {
-/*  89 */     String userHome = System.getProperty("user.home", ".");
-/*     */     File workingDirectory;
-/*  91 */     switch (getPlatform().ordinal()) {
-/*     */     case 0:
-/*     */     case 1:
-/*  94 */       workingDirectory = new File(userHome, '.' + applicationName + '/');
-/*  95 */       break;
-/*     */     case 2:
-/*  97 */       String applicationData = System.getenv("APPDATA");
-/*  98 */       if (applicationData != null)
-/*  99 */         workingDirectory = new File(applicationData, "." + applicationName + '/');
-/*     */       else {
-/* 101 */         workingDirectory = new File(userHome, '.' + applicationName + '/');
-/*     */       }
-/* 103 */       break;
-/*     */     case 3:
-/* 105 */       workingDirectory = new File(userHome, "Library/Application Support/" + applicationName);
-/* 106 */       break;
-/*     */     default:
-/* 108 */       workingDirectory = new File(userHome, applicationName + '/');
-/*     */     }
-/* 110 */     if ((!workingDirectory.exists()) && (!workingDirectory.mkdirs())) {
-/* 111 */       throw new RuntimeException("The working directory could not be created: " + workingDirectory);
-/*     */     }
-/* 113 */     return workingDirectory;
-/*     */   }
-/*     */ 
-/*     */   private static OS getPlatform() {
-/* 117 */     String osName = System.getProperty("os.name").toLowerCase();
-/* 118 */     if (osName.contains("win")) {
-/* 119 */       return OS.windows;
-/*     */     }
-/* 121 */     if (osName.contains("mac")) {
-/* 122 */       return OS.macos;
-/*     */     }
-/* 124 */     if (osName.contains("solaris")) {
-/* 125 */       return OS.solaris;
-/*     */     }
-/* 127 */     if (osName.contains("sunos")) {
-/* 128 */       return OS.solaris;
-/*     */     }
-/* 130 */     if (osName.contains("linux")) {
-/* 131 */       return OS.linux;
-/*     */     }
-/* 133 */     if (osName.contains("unix")) {
-/* 134 */       return OS.linux;
-/*     */     }
-/* 136 */     return OS.unknown;
-/*     */   }
-/*     */ 
-///*     */   public static String excutePost(String targetURL, String urlParameters) {
-///* 140 */     HttpURLConnection connection = null;
-///*     */     try {
-///* 142 */       URL url = new URL(targetURL);
-///* 143 */       connection = (HttpURLConnection)url.openConnection();
-///* 144 */       connection.setRequestMethod("POST");
-///* 145 */       connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-///*     */ 
-///* 147 */       connection.setRequestProperty("Content-Length", Integer.toString(urlParameters.getBytes().length));
-///* 148 */       connection.setRequestProperty("Content-Language", "en-US");
-///*     */ 
-///* 150 */       connection.setUseCaches(false);
-///* 151 */       connection.setDoInput(true);
-///* 152 */       connection.setDoOutput(true);
-///*     */ 
-///* 154 */       wr = new DataOutputStream(connection.getOutputStream());
-///* 155 */       wr.writeBytes(urlParameters);
-///* 156 */       wr.flush();
-///* 157 */       wr.close();
-///*     */ 
-///* 159 */       InputStream is = connection.getInputStream();
-///* 160 */       BufferedReader rd = new BufferedReader(new InputStreamReader(is));
-///*     */ 
-///* 162 */       StringBuffer response = new StringBuffer();
-///*     */       String line;
-///* 164 */       while ((line = rd.readLine()) != null) {
-///* 165 */         response.append(line);
-///* 166 */         response.append('\r');
-///*     */       }
-///* 168 */       rd.close();
-///* 169 */       String str1 = response.toString();
-///* 170 */       //String str1 = str1;  // bho?
-///*     */       return str1;
-///*     */     }
-///*     */     catch (Exception e)
-///*     */     {
-///* 172 */       e.printStackTrace();
-///* 173 */       DataOutputStream wr = null;
-/////*     */       return wr;
-///*     */     }
-///*     */     finally
-///*     */     {
-///* 175 */       if (connection != null)
-///* 176 */         connection.disconnect(); 
-///* 176 */      }throw localObject;
-//*     */   }
-/*     */ 
-/*     */   public static void resetVersion()
-/*     */   {
-/* 187 */     DataOutputStream dos = null;
-/*     */     try {
-/* 189 */       File dir = new File(getWorkingDirectory() + File.separator + "bin" + File.separator);
-/* 190 */       File versionFile = new File(dir, "version");
-/* 191 */       dos = new DataOutputStream(new FileOutputStream(versionFile));
-/* 192 */       dos.writeUTF("0");
-/* 193 */       dos.close();
-/*     */     } catch (FileNotFoundException ex) {
-/* 195 */       Logger.getLogger(MinecraftUtil.class.getName()).log(Level.SEVERE, null, ex);
-/*     */     } catch (IOException ex) {
-/* 197 */       Logger.getLogger(MinecraftUtil.class.getName()).log(Level.SEVERE, null, ex);
-/*     */     } finally {
-/*     */       try {
-/* 200 */         dos.close();
-/*     */       } catch (IOException ex) {
-/* 202 */         Logger.getLogger(MinecraftUtil.class.getName()).log(Level.SEVERE, null, ex);
-/*     */       }
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   public static String getFakeLatestVersion() {
-/*     */     try {
-/* 209 */       File dir = new File(getWorkingDirectory() + File.separator + "bin" + File.separator);
-/* 210 */       File file = new File(dir, "version");
-/* 211 */       DataInputStream dis = new DataInputStream(new FileInputStream(file));
-/* 212 */       String version = dis.readUTF();
-/* 213 */       dis.close();
-/* 214 */       if (version.equals("0")) {
-/* 215 */         return "1285241960000";
-/*     */       }
-/* 217 */       return version; } catch (IOException ex) {
-/*     */     }
-/* 219 */     return "1285241960000";
-/*     */   }
-/*     */ 
-/*     */   private static enum OS
-/*     */   {
-/* 183 */     linux, solaris, windows, macos, unknown;
-/*     */   }
-/*     */ }
+package net.minecraft;
+
+import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+public class MinecraftUtil
+{
+  private static File workDir = null;
+  private static File binDir = null;
+  private static File resourcesDis = null;
+  private static File optionsFile = null;
+  private static File lastloginFile = null;
+  private static File savesDir = null;
+  private static File tempFolder = null;
+  private static File nativesFolder = null;
+
+  public static File getWorkingDirectory() {
+    if (workDir == null) {
+      workDir = getWorkingDirectory("minecraft");
+    }
+    return workDir;
+  }
+
+  public static File getBinFolder() {
+    if (binDir == null) {
+      binDir = new File(getWorkingDirectory(), "bin");
+    }
+    return binDir;
+  }
+
+  public static File getResourcesFolder() {
+    if (resourcesDis == null) {
+      resourcesDis = new File(getWorkingDirectory(), "resources");
+    }
+    return resourcesDis;
+  }
+
+  public static File getOptionsFile() {
+    if (optionsFile == null) {
+      optionsFile = new File(getWorkingDirectory(), "options.txt");
+    }
+    return optionsFile;
+  }
+
+  public static File getLoginFile() {
+    if (lastloginFile == null) {
+      lastloginFile = new File(getWorkingDirectory(), "lastlogin");
+    }
+    return lastloginFile;
+  }
+
+  public static File getSavesFolder() {
+    if (savesDir == null) {
+      savesDir = new File(getWorkingDirectory(), "saves");
+    }
+    return savesDir;
+  }
+
+  public static File getNativesFolder() {
+    if (nativesFolder == null) {
+      nativesFolder = new File(getBinFolder(), "natives");
+    }
+    return nativesFolder;
+  }
+
+  public static File getTempFolder() {
+    if (tempFolder == null) {
+      tempFolder = new File(System.getProperties().getProperty("java.io.tmpdir"), "MCBKPMNGR");
+    }
+    if (!tempFolder.exists()) {
+      tempFolder.mkdirs();
+    }
+    return tempFolder;
+  }
+
+  public static File getWorkingDirectory(String applicationName) {
+    String userHome = System.getProperty("user.home", ".");
+    File workingDirectory;
+    switch (getPlatform().ordinal()) {
+    case 0:
+    case 1:
+      workingDirectory = new File(userHome, '.' + applicationName + '/');
+      break;
+    case 2:
+      String applicationData = System.getenv("APPDATA");
+      if (applicationData != null)
+        workingDirectory = new File(applicationData, "." + applicationName + '/');
+      else {
+        workingDirectory = new File(userHome, '.' + applicationName + '/');
+      }
+      break;
+    case 3:
+      workingDirectory = new File(userHome, "Library/Application Support/" + applicationName);
+      break;
+    default:
+      workingDirectory = new File(userHome, applicationName + '/');
+    }
+    if ((!workingDirectory.exists()) && (!workingDirectory.mkdirs())) {
+      throw new RuntimeException("The working directory could not be created: " + workingDirectory);
+    }
+    return workingDirectory;
+  }
+
+  private static OS getPlatform() {
+    String osName = System.getProperty("os.name").toLowerCase();
+    if (osName.contains("win")) {
+      return OS.windows;
+    }
+    if (osName.contains("mac")) {
+      return OS.macos;
+    }
+    if (osName.contains("solaris")) {
+      return OS.solaris;
+    }
+    if (osName.contains("sunos")) {
+      return OS.solaris;
+    }
+    if (osName.contains("linux")) {
+      return OS.linux;
+    }
+    if (osName.contains("unix")) {
+      return OS.linux;
+    }
+    return OS.unknown;
+  }
+
+public static String excutePost(String targetURL, String urlParameters) {
+  HttpURLConnection connection = null;
+  try {
+    URL url = new URL(targetURL);
+    connection = (HttpURLConnection)url.openConnection();
+    connection.setRequestMethod("POST");
+    connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+
+    connection.setRequestProperty("Content-Length", Integer.toString(urlParameters.getBytes().length));
+    connection.setRequestProperty("Content-Language", "en-US");
+
+    connection.setUseCaches(false);
+    connection.setDoInput(true);
+    connection.setDoOutput(true);
+
+    wr = new DataOutputStream(connection.getOutputStream());
+    wr.writeBytes(urlParameters);
+    wr.flush();
+    wr.close();
+
+    InputStream is = connection.getInputStream();
+    BufferedReader rd = new BufferedReader(new InputStreamReader(is));
+
+    StringBuffer response = new StringBuffer();
+    String line;
+    while ((line = rd.readLine()) != null) {
+      response.append(line);
+      response.append('\r');
+    }
+    rd.close();
+    String str1 = response.toString();
+    //String str1 = str1;  // bho?
+    return str1;
+  }
+  catch (Exception e)
+  {
+    e.printStackTrace();
+    DataOutputStream wr = null;
+      return wr;
+  }
+  finally
+  {
+    if (connection != null)
+      connection.disconnect(); 
+   } throw localObject;
+ }
+
+public static void resetVersion() {
+  DataOutputStream dos = null;
+  try {
+    File dir = new File(getWorkingDirectory() + File.separator + "bin" + File.separator);
+    File versionFile = new File(dir, "version");
+    dos = new DataOutputStream(new FileOutputStream(versionFile));
+    dos.writeUTF("0");
+    dos.close();
+  } catch (FileNotFoundException ex) {
+    Logger.getLogger(MinecraftUtil.class.getName()).log(Level.SEVERE, null, ex);
+  } catch (IOException ex) {
+    Logger.getLogger(MinecraftUtil.class.getName()).log(Level.SEVERE, null, ex);
+  } finally {
+    try {
+      dos.close();
+    } catch (IOException ex) {
+      Logger.getLogger(MinecraftUtil.class.getName()).log(Level.SEVERE, null, ex);
+    }
+  }
+}
+
+public static String getFakeLatestVersion() {
+  try {
+    File dir = new File(getWorkingDirectory() + File.separator + "bin" + File.separator);
+    File file = new File(dir, "version");
+    DataInputStream dis = new DataInputStream(new FileInputStream(file));
+    String version = dis.readUTF();
+    dis.close();
+    if (version.equals("0")) {
+      return "1285241960000";
+    }
+    return version; } catch (IOException ex) {
+  }
+  return "1285241960000";
+}
+
+private static enum OS
+{
+  linux, solaris, windows, macos, unknown;
+}
+
