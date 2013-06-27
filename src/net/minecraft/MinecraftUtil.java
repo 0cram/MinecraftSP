@@ -137,91 +137,47 @@ public class MinecraftUtil
     return OS.unknown;
   }
 
-public static String excutePost(String targetURL, String urlParameters) {
-  HttpURLConnection connection = null;
-  try {
-    URL url = new URL(targetURL);
-    connection = (HttpURLConnection)url.openConnection();
-    connection.setRequestMethod("POST");
-    connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-
-    connection.setRequestProperty("Content-Length", Integer.toString(urlParameters.getBytes().length));
-    connection.setRequestProperty("Content-Language", "en-US");
-
-    connection.setUseCaches(false);
-    connection.setDoInput(true);
-    connection.setDoOutput(true);
-
-    wr = new DataOutputStream(connection.getOutputStream());
-    wr.writeBytes(urlParameters);
-    wr.flush();
-    wr.close();
-
-    InputStream is = connection.getInputStream();
-    BufferedReader rd = new BufferedReader(new InputStreamReader(is));
-
-    StringBuffer response = new StringBuffer();
-    String line;
-    while ((line = rd.readLine()) != null) {
-      response.append(line);
-      response.append('\r');
-    }
-    rd.close();
-    String str1 = response.toString();
-    //String str1 = str1;  // bho?
-    return str1;
-  }
-  catch (Exception e)
-  {
-    e.printStackTrace();
-    DataOutputStream wr = null;
-      return wr;
-  }
-  finally
-  {
-    if (connection != null)
-      connection.disconnect(); 
-   } throw localObject;
- }
-
-public static void resetVersion() {
-  DataOutputStream dos = null;
-  try {
-    File dir = new File(getWorkingDirectory() + File.separator + "bin" + File.separator);
-    File versionFile = new File(dir, "version");
-    dos = new DataOutputStream(new FileOutputStream(versionFile));
-    dos.writeUTF("0");
-    dos.close();
-  } catch (FileNotFoundException ex) {
-    Logger.getLogger(MinecraftUtil.class.getName()).log(Level.SEVERE, null, ex);
-  } catch (IOException ex) {
-    Logger.getLogger(MinecraftUtil.class.getName()).log(Level.SEVERE, null, ex);
-  } finally {
+    public static void resetVersion() {
+    DataOutputStream dos = null;
     try {
-      dos.close();
+        File dir = new File(getWorkingDirectory() + File.separator + "bin" + File.separator);
+        File versionFile = new File(dir, "version");
+        dos = new DataOutputStream(new FileOutputStream(versionFile));
+        dos.writeUTF("0");
+        dos.close();
+    } catch (FileNotFoundException ex) {
+        Logger.getLogger(MinecraftUtil.class.getName()).log(Level.SEVERE, null, ex);
     } catch (IOException ex) {
-      Logger.getLogger(MinecraftUtil.class.getName()).log(Level.SEVERE, null, ex);
+        Logger.getLogger(MinecraftUtil.class.getName()).log(Level.SEVERE, null, ex);
+    } finally {
+        try {
+        dos.close();
+        } catch (IOException ex) {
+        Logger.getLogger(MinecraftUtil.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
-  }
-}
-
-public static String getFakeLatestVersion() {
-  try {
-    File dir = new File(getWorkingDirectory() + File.separator + "bin" + File.separator);
-    File file = new File(dir, "version");
-    DataInputStream dis = new DataInputStream(new FileInputStream(file));
-    String version = dis.readUTF();
-    dis.close();
-    if (version.equals("0")) {
-      return "1285241960000";
     }
-    return version; } catch (IOException ex) {
-  }
-  return "1285241960000";
-}
 
-private static enum OS
-{
-  linux, solaris, windows, macos, unknown;
-}
+    public static String getFakeLatestVersion() {
+    try {
+        File dir = new File(getWorkingDirectory() + File.separator + "bin" + File.separator);
+        File file = new File(dir, "version");
+        DataInputStream dis = new DataInputStream(new FileInputStream(file));
+        String version = dis.readUTF();
+        dis.close();
+        if (version.equals("0")) {
+        return "1285241960000";
+        }
+        return version; } catch (IOException ex) {
+    }
+        return "1285241960000";
+    }
+
+    private static enum OS
+    {
+        linux, solaris, windows, macos, unknown;
+    }
+
+
+} //end
 
